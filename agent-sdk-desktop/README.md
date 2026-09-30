@@ -1,6 +1,6 @@
 # 在本地桌面安装 Claude Agent SDK
 
-这些脚本会在桌面上创建 `claude-agent-sdk` 文件夹，在里面建一个独立的 Python 虚拟环境，并安装 [Claude Agent SDK](https://docs.claude.com/en/api/agent-sdk/overview)（`claude-agent-sdk`）。Python 包自带 Claude Code CLI，**不需要另外安装 Node.js**。
+这些脚本会在桌面上创建 `claude-agent-sdk` 文件夹，在里面建一个独立的 Python 虚拟环境，并安装 [Claude Agent SDK](https://docs.claude.com/en/api/agent-sdk/overview)（`claude-agent-sdk`）。macOS / Linux 的 Python 包自带 Claude Code CLI；**Windows 的包不带**，安装脚本会额外运行官方安装器 `irm https://claude.ai/install.ps1 | iex` 装好 `claude.exe`（SDK 在 Windows 上不接受 npm 装出来的 `claude.cmd`）。都不需要 Node.js。
 
 ## 前提条件
 
@@ -82,5 +82,6 @@ npm install @anthropic-ai/claude-agent-sdk
 - **`python` 不是内部或外部命令**：重装 Python 并勾选 “Add to PATH”，或改用 `py` 命令。
 - **PowerShell 提示禁止运行脚本**：先执行 `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass`。
 - **macOS 双击 `.command` 提示无法打开**：右键 → 打开，或在终端运行 `bash run-agent.command`。
+- **Windows 报 `Claude Code not found`**：在 PowerShell 运行 `irm https://claude.ai/install.ps1 | iex`，然后重新打开终端。
 - **认证错误 / 401**：检查 `ANTHROPIC_API_KEY` 是否正确、账户是否有余额。
 - **升级 SDK**：`.venv/bin/python -m pip install -U claude-agent-sdk`。

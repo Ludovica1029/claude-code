@@ -31,7 +31,15 @@ $VenvPy = Join-Path $Target ".venv\Scripts\python.exe"
 & $VenvPy -m pip install --upgrade pip
 & $VenvPy -m pip install --upgrade claude-agent-sdk
 
-# 4. Copy example + launcher
+# 4. Windows wheels do not bundle Claude Code; install the native claude.exe
+#    (the SDK refuses npm's claude.cmd shim on Windows).
+$ClaudeExe = Join-Path $HOME ".local\bin\claude.exe"
+if (-not (Test-Path $ClaudeExe) -and -not (Get-Command claude.exe -ErrorAction SilentlyContinue)) {
+    Write-Host "==> 安装 Claude Code (claude.exe)"
+    Invoke-RestMethod https://claude.ai/install.ps1 | Invoke-Expression
+}
+
+# 5. Copy example + launcher
 Copy-Item -Force (Join-Path $PSScriptRoot "hello_agent.py") $Target
 @"
 @echo off
