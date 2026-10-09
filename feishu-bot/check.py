@@ -34,7 +34,6 @@ def main():
     info = bot.get("bot", {})
     print(f"[通过] 机器人: {info.get('app_name')}  状态: "
           f"{'已启用' if info.get('activate_status') == 2 else info.get('activate_status')}")
-    print("\n下一步: 运行 python bot.py，然后在开放平台「事件与回调」里选长连接并添加 im.message.receive_v1")
 
 
 if __name__ == "__main__":

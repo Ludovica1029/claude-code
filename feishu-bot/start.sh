@@ -36,7 +36,7 @@ if [ ! -f .env ]; then
 fi
 
 # Agent 配置（旧的 .env 没有这部分时补问）
-if ! grep -q CLAUDE_MODE .env; then
+if ! grep -q '^export CLAUDE_MODE=' .env; then
   echo "== Agent 配置 =="
   read -r -p "Claude Code 的工作目录 [$HOME]: " WORKDIR < /dev/tty
   read -r -p "是否允许它执行任意终端命令？(y/N，选 N 则只能读写文件): " ALLOW_CMD < /dev/tty
