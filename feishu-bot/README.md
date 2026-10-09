@@ -24,3 +24,7 @@ python bot.py     # 保持运行
 默认是 Agent 模式（`CLAUDE_MODE=cli`），调用本机 `claude -p`，需先安装 Claude Code：`curl -fsSL https://claude.ai/install.sh | bash`。第一个给机器人发消息的人会被绑定为主人，其他人无法使用。
 
 **不要把 App Secret 和 API Key 提交到仓库。**
+
+## 群聊
+
+默认只回复 @机器人 的消息（`FEISHU_GROUP_REPLY=mention`）。要回复群里所有消息：开通权限 `im:message.group_msg`（获取群组中所有消息）并发布版本，然后在 `.env` 里加 `export FEISHU_GROUP_REPLY=all`。非主人在群里发的消息会被静默忽略。

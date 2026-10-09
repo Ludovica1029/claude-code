@@ -11,6 +11,8 @@
                                     或 bypassPermissions（可跑任何命令）
   FEISHU_OWNER_OPEN_IDS             可选，允许使用的飞书 open_id（逗号分隔）。
                                     不填则第一个发消息的人自动绑定为主人，记录在 .owner
+  FEISHU_GROUP_REPLY                群聊里何时回复：mention（默认，只回复 @机器人 的消息）
+                                    或 all（回复所有消息，需开通「获取群组中所有消息」权限）
 """
 import json, logging, os, re, shutil, subprocess, threading
 from collections import OrderedDict, defaultdict
@@ -25,6 +27,7 @@ MODEL = os.environ.get("CLAUDE_MODEL", "claude-opus-5-5")
 MODE = os.environ.get("CLAUDE_MODE", "cli")
 WORKDIR = os.path.expanduser(os.environ.get("CLAUDE_WORKDIR", "~"))
 PERMISSION_MODE = os.environ.get("CLAUDE_PERMISSION_MODE", "acceptEdits")
+GROUP_REPLY = os.environ.get("FEISHU_GROUP_REPLY", "mention")
 CLI_TIMEOUT = 1800       # 单个任务最长 30 分钟
 MAX_TURNS = 20           # api 模式每个会话保留的历史消息条数
 MAX_REPLY = 15000        # 飞书单条消息别太长
@@ -48,6 +51,28 @@ history: dict = {}                       # api 模式：chat_id -> 消息列表
 sessions: dict = {}                      # cli 模式：chat_id -> Claude Code session_id
 chat_locks = defaultdict(threading.Lock)  # 同一会话的消息按顺序处理
 seen: "OrderedDict[str, None]" = OrderedDict()  # 飞书可能重推同一事件，按 message_id 去重
+
+
+def fetch_bot_open_id() -> str:
+    """机器人自己的 open_id，用来判断群消息是否 @ 了它。"""
+    try:
+        req = (lark.BaseRequest.builder().http_method(lark.HttpMethod.GET)
+               .uri("/open-apis/bot/v3/info").token_types({lark.AccessTokenType.TENANT}).build())
+        resp = feishu.request(req)
+        return json.loads(resp.raw.content).get("bot", {}).get("open_id", "")
+    except Exception:
+        log.exception("获取机器人 open_id 失败，群聊中只要有 @ 就当作 @ 了机器人")
+        return ""
+
+
+BOT_OPEN_ID = fetch_bot_open_id()
+
+
+def mentions_bot(msg) -> bool:
+    mentions = msg.mentions or []
+    if not BOT_OPEN_ID:
+        return bool(mentions)
+    return any(m.id and m.id.open_id == BOT_OPEN_ID for m in mentions)
 
 
 # ---------- 主人校验 ----------
@@ -163,11 +188,16 @@ def on_message(data: P2ImMessageReceiveV1) -> None:
     if len(seen) > 1000:
         seen.popitem(last=False)
 
+    is_group = msg.chat_type != "p2p"
+    if is_group and GROUP_REPLY != "all" and not mentions_bot(msg):
+        return  # 群里没 @ 机器人的消息不理会
+
     open_id = data.event.sender.sender_id.open_id
     status = check_owner(open_id)
     if status == "denied":
         log.warning("拒绝非主人 open_id=%s", open_id)
-        reply(msg.message_id, "抱歉，这个机器人只供主人使用。")
+        if not is_group:  # 群里不回拒绝消息，免得刷屏
+            reply(msg.message_id, "抱歉，这个机器人只供主人使用。")
         return
     if status == "bound":
         reply(msg.message_id, "已把你绑定为主人，之后只有你能使用这个机器人。")
@@ -184,7 +214,8 @@ def on_message(data: P2ImMessageReceiveV1) -> None:
 if __name__ == "__main__":
     handler = (lark.EventDispatcherHandler.builder("", "")
                .register_p2_im_message_receive_v1(on_message).build())
-    log.info("启动长连接，模式=%s 模型=%s 工作目录=%s 权限=%s", MODE, MODEL, WORKDIR, PERMISSION_MODE)
+    log.info("启动长连接，模式=%s 模型=%s 工作目录=%s 权限=%s 群聊=%s",
+             MODE, MODEL, WORKDIR, PERMISSION_MODE, GROUP_REPLY)
     if not owners:
         log.info("尚未绑定主人：第一个给机器人发消息的人会成为主人，请你自己先发")
     lark.ws.Client(APP_ID, APP_SECRET, event_handler=handler, log_level=lark.LogLevel.INFO).start()
