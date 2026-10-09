@@ -3,6 +3,8 @@
 set -e
 cd "$(dirname "$0")"
 export PATH="$HOME/.local/bin:$PATH"
+# 国内网络下避免 Claude Code 去连自动更新、统计等官方服务而卡住
+export CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1
 
 if [ ! -d .venv ]; then
   echo "== 创建虚拟环境并安装依赖 =="
