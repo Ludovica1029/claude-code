@@ -41,3 +41,14 @@ python bot.py     # 保持运行
 ## 读取飞书文档（主人模式）
 
 用飞书官方的 `@larksuiteoapi/lark-mcp`，以你本人的身份读取你有权限的文档：在开放平台配置重定向 URL `http://localhost:3000/callback`，开通文档读取权限，然后执行 `lark-mcp login` 授权；再用 `claude mcp add` 把它加到 Claude Code，并在 `.env` 里设置 `export CLAUDE_ALLOWED_TOOLS=mcp__lark-mcp`。访客模式使用 `--strict-mcp-config`，不会加载这个工具。
+
+### 内嵌电子表格
+
+官方 lark-mcp 读不到文档里内嵌电子表格的单元格。`feishu_docs_mcp.py` 是一个只依赖标准库的只读 MCP 工具，补上了这部分：
+
+```bash
+python feishu_docs_mcp.py login     # 浏览器授权一次
+claude mcp add -s user feishu-docs -e FEISHU_APP_ID=... -e FEISHU_APP_SECRET=... -- python /path/to/feishu_docs_mcp.py
+```
+
+然后把 `mcp__feishu-docs` 加进 `CLAUDE_ALLOWED_TOOLS`。
