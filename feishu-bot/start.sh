@@ -50,6 +50,14 @@ if ! grep -q '^export CLAUDE_MODE=' .env; then
 fi
 
 source .env
+# 数字分身资料目录（访客模式只能看这里）
+TWIN_DIR="${GUEST_WORKDIR:-$HOME/digital-twin}"
+TWIN_DIR="${TWIN_DIR/#\~/$HOME}"
+if [ ! -f "$TWIN_DIR/CLAUDE.md" ]; then
+  mkdir -p "$TWIN_DIR"
+  cp -R twin-template/. "$TWIN_DIR/"
+  echo "已创建数字分身资料目录：$TWIN_DIR（编辑其中的 CLAUDE.md，资料放进 knowledge/）"
+fi
 if [ "$CLAUDE_MODE" = cli ] && ! command -v claude >/dev/null; then
   echo "找不到 claude 命令。请先安装 Claude Code：curl -fsSL https://claude.ai/install.sh | bash"
   exit 1

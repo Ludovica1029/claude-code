@@ -25,6 +25,15 @@ python bot.py     # 保持运行
 
 **不要把 App Secret 和 API Key 提交到仓库。**
 
-## 群聊
+## 群聊与访客
 
-默认只回复 @机器人 的消息（`FEISHU_GROUP_REPLY=mention`）。要回复群里所有消息：开通权限 `im:message.group_msg`（获取群组中所有消息）并发布版本，然后在 `.env` 里加 `export FEISHU_GROUP_REPLY=all`。非主人在群里发的消息会被静默忽略。
+群里出现以下情况时，机器人会回复（需开通 `im:message.group_msg`）：
+- 有人 @机器人
+- 有人回复机器人发过的消息
+- 消息里提到关键词：默认是机器人名字，可在 `.env` 里设置 `export FEISHU_BOT_KEYWORDS=小璐,小助手`
+
+如果要回复群里的所有消息，设置 `export FEISHU_GROUP_REPLY=all`。
+
+**主人**用完整的 Agent 模式。**其他人（访客）**用只读的受限模式：只能读 `~/digital-twin`（`GUEST_WORKDIR`）里的资料，不能改文件，也不能执行命令。要关闭访客功能，设置 `export FEISHU_ALLOW_GUESTS=0`。
+
+首次启动时，`start.sh` 会用 `twin-template/` 生成 `~/digital-twin/CLAUDE.md`（数字分身的人设）和 `knowledge/`（资料目录）。
