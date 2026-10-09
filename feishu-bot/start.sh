@@ -2,6 +2,7 @@
 # 一键启动：首次运行会建虚拟环境、装依赖、询问密钥并保存到 .env，之后直接启动。
 set -e
 cd "$(dirname "$0")"
+export PATH="$HOME/.local/bin:$PATH"
 
 if [ ! -d .venv ]; then
   echo "== 创建虚拟环境并安装依赖 =="
@@ -32,7 +33,25 @@ if [ ! -f .env ]; then
   echo "已保存到 $(pwd)/.env（填错了就删掉这个文件重新运行）"
 fi
 
+# Agent 配置（旧的 .env 没有这部分时补问）
+if ! grep -q CLAUDE_MODE .env; then
+  echo "== Agent 配置 =="
+  read -r -p "Claude Code 的工作目录 [$HOME]: " WORKDIR < /dev/tty
+  read -r -p "是否允许它执行任意终端命令？(y/N，选 N 则只能读写文件): " ALLOW_CMD < /dev/tty
+  WORKDIR=$(printf '%s' "$WORKDIR" | awk '{$1=$1;print}')
+  case "$ALLOW_CMD" in [yY]*) PERM=bypassPermissions ;; *) PERM=acceptEdits ;; esac
+  {
+    printf 'export CLAUDE_MODE=cli\n'
+    printf 'export CLAUDE_WORKDIR=%q\n' "${WORKDIR:-$HOME}"
+    printf 'export CLAUDE_PERMISSION_MODE=%q\n' "$PERM"
+  } >> .env
+fi
+
 source .env
+if [ "$CLAUDE_MODE" = cli ] && ! command -v claude >/dev/null; then
+  echo "找不到 claude 命令。请先安装 Claude Code：curl -fsSL https://claude.ai/install.sh | bash"
+  exit 1
+fi
 echo "== 自检 =="
 .venv/bin/python check.py
 echo "== 启动机器人（不要关闭此窗口，按 Ctrl+C 停止）=="

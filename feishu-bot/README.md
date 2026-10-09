@@ -21,6 +21,6 @@ python bot.py     # 保持运行
 
 然后私聊机器人，或在群里 @ 它。发送 `/reset` 清空上下文。
 
-`CLAUDE_MODE=cli` 时改为调用本机 `claude -p`（需已安装并登录 Claude Code），可以让它在 `CLAUDE_WORKDIR` 下读代码、跑命令。
+默认是 Agent 模式（`CLAUDE_MODE=cli`），调用本机 `claude -p`，需先安装 Claude Code：`curl -fsSL https://claude.ai/install.sh | bash`。第一个给机器人发消息的人会被绑定为主人，其他人无法使用。
 
 **不要把 App Secret 和 API Key 提交到仓库。**
