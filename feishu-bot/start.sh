@@ -13,13 +13,22 @@ if [ ! -f .env ]; then
   echo "== 首次配置（输入内容不会显示，粘贴后直接回车）=="
   read -r -p "飞书 App ID [cli_aa365e8b88f91bef]: " APP_ID < /dev/tty
   read -r -s -p "飞书 App Secret: " APP_SECRET < /dev/tty; echo
-  read -r -s -p "Claude API Key (sk-ant-...): " API_KEY < /dev/tty; echo
+  read -r -s -p "Claude API Key: " API_KEY < /dev/tty; echo
+  read -r -p "API 地址（官方 Key 直接回车；中转站填它给的地址，如 https://xxx.com）: " BASE_URL < /dev/tty
+  read -r -p "模型名 [claude-opus-5-5]（中转站按它支持的模型填）: " MODEL < /dev/tty
+  # 去掉首尾空白；若误粘了多段文字，只取最后一段
+  for v in APP_ID APP_SECRET API_KEY BASE_URL MODEL; do
+    val=$(printf '%s' "${!v}" | awk '{print $NF}')
+    printf -v "$v" '%s' "$val"
+  done
   umask 077
-  cat > .env <<ENV
-export FEISHU_APP_ID=${APP_ID:-cli_aa365e8b88f91bef}
-export FEISHU_APP_SECRET=$APP_SECRET
-export ANTHROPIC_API_KEY=$API_KEY
-ENV
+  {
+    printf 'export FEISHU_APP_ID=%q\n' "${APP_ID:-cli_aa365e8b88f91bef}"
+    printf 'export FEISHU_APP_SECRET=%q\n' "$APP_SECRET"
+    printf 'export ANTHROPIC_API_KEY=%q\n' "$API_KEY"
+    printf 'export CLAUDE_MODEL=%q\n' "${MODEL:-claude-opus-5-5}"
+    if [ -n "$BASE_URL" ]; then printf 'export ANTHROPIC_BASE_URL=%q\n' "${BASE_URL%/}"; fi
+  } > .env
   echo "已保存到 $(pwd)/.env（填错了就删掉这个文件重新运行）"
 fi
 
