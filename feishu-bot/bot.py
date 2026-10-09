@@ -18,6 +18,8 @@
   FEISHU_ALLOW_GUESTS               其他人能否使用，默认 1。访客走只读的受限模式：
                                     只能读 GUEST_WORKDIR 里的资料，不能改文件、不能跑命令
   GUEST_WORKDIR                     访客模式的资料目录，默认 ~/digital-twin
+  CLAUDE_ALLOWED_TOOLS              可选，主人模式下免确认的额外工具（逗号分隔），
+                                    如 mcp__lark-mcp 允许读飞书文档。访客模式永远不加载 MCP
 """
 import json, logging, os, re, shutil, subprocess, threading
 from collections import OrderedDict, defaultdict
@@ -32,6 +34,7 @@ MODEL = os.environ.get("CLAUDE_MODEL", "claude-opus-5-5")
 MODE = os.environ.get("CLAUDE_MODE", "cli")
 WORKDIR = os.path.expanduser(os.environ.get("CLAUDE_WORKDIR", "~"))
 PERMISSION_MODE = os.environ.get("CLAUDE_PERMISSION_MODE", "acceptEdits")
+ALLOWED_TOOLS = os.environ.get("CLAUDE_ALLOWED_TOOLS", "").strip()
 GROUP_REPLY = os.environ.get("FEISHU_GROUP_REPLY", "mention")
 ALLOW_GUESTS = os.environ.get("FEISHU_ALLOW_GUESTS", "1") not in ("0", "false", "no", "")
 GUEST_WORKDIR = os.path.expanduser(os.environ.get("GUEST_WORKDIR", "~/digital-twin"))
@@ -180,6 +183,8 @@ def ask_cli(key: str, text: str, guest: bool = False) -> str:
         cwd = GUEST_WORKDIR
     else:
         cmd += ["--permission-mode", PERMISSION_MODE]
+        if ALLOWED_TOOLS:
+            cmd += ["--allowedTools", ALLOWED_TOOLS]
         cwd = WORKDIR
     sid = sessions.get(key)
     if sid:

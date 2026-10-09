@@ -37,3 +37,7 @@ python bot.py     # 保持运行
 **主人**用完整的 Agent 模式。**其他人（访客）**用只读的受限模式：只能读 `~/digital-twin`（`GUEST_WORKDIR`）里的资料，不能改文件，也不能执行命令。要关闭访客功能，设置 `export FEISHU_ALLOW_GUESTS=0`。
 
 首次启动时，`start.sh` 会用 `twin-template/` 生成 `~/digital-twin/CLAUDE.md`（数字分身的人设）和 `knowledge/`（资料目录）。
+
+## 读取飞书文档（主人模式）
+
+用飞书官方的 `@larksuiteoapi/lark-mcp`，以你本人的身份读取你有权限的文档：在开放平台配置重定向 URL `http://localhost:3000/callback`，开通文档读取权限，然后执行 `lark-mcp login` 授权；再用 `claude mcp add` 把它加到 Claude Code，并在 `.env` 里设置 `export CLAUDE_ALLOWED_TOOLS=mcp__lark-mcp`。访客模式使用 `--strict-mcp-config`，不会加载这个工具。
